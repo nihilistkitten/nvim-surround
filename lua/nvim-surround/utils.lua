@@ -1,6 +1,8 @@
 local buffer = require("nvim-surround.buffer")
 local html = require("nvim-surround.html")
 
+local async = require("plenary").async
+
 local M = {}
 
 -- Do nothing.
@@ -47,10 +49,11 @@ Gets a string input from the user.
 @return The input string, or nil if the operation is cancelled.
 ]]
 M.get_input = function(prompt)
-    return string.format("%s", vim.fn.input({
-        prompt = prompt,
-        cancelreturn = nil,
-    }))
+    local tx, rx = async.control.channel.oneshot()
+
+    -- use the sender directly as the callback
+    vim.ui.input({ prompt = prompt }, tx)
+    return rx()
 end
 
 --[[
